@@ -1,39 +1,39 @@
 package controllers
 
 import (
-	"net/http"
-	"time"
+	"mini-project/database"
+	"mini-project/models" // Pastikan ini ada
 	"mini-project/utils"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 )
 
-var SecretKey = []byte("your_secret_key")
+// GetUser retrieves user data
+func GetUser(c *gin.Context) {
+	id := c.Param("id")
+	var user models.User
 
-func Login(c *gin.Context) {
-	var loginData map[string]string
-	if err := c.ShouldBindJSON(&loginData); err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid input")
-		return
-	}
-
-	username, password := loginData["username"], loginData["password"]
-	if username != "admin" || password != "password" { // Sederhanakan untuk demo
-		utils.ErrorResponse(c, http.StatusUnauthorized, "Invalid credentials")
-		return
-	}
-
-	claims := jwt.MapClaims{
-		"username": username,
-		"exp":      time.Now().Add(time.Hour * 24).Unix(),
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(SecretKey)
+	err := database.DB.QueryRow("SELECT * FROM users WHERE id = $1", id).Scan(&user.ID, &user.Name, &user.Email)
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusInternalServerError, "Error generating token")
+		utils.ErrorResponse(c, "User not found")
 		return
 	}
 
-	utils.SuccessResponse(c, http.StatusOK, gin.H{"token": tokenString})
+	utils.SuccessResponse(c, user)
+}
+
+// CreateUser creates a new user
+func CreateUser(c *gin.Context) {
+	var user models.User
+	if err := c.ShouldBindJSON(&user); err != nil {
+		utils.ErrorResponse(c, "Invalid input")
+		return
+	}
+
+	_, err := database.DB.Exec("INSERT INTO users (name, email) VALUES ($1, $2)", user.Name, user.Email)
+	if err != nil {
+		utils.ErrorResponse(c, "Failed to create user")
+		return
+	}
+
+	utils.SuccessResponse(c, "User created successfully")
 }

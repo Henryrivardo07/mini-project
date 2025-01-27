@@ -2,19 +2,18 @@ package utils
 
 import (
 	"github.com/gin-gonic/gin"
-	"net/http"
 )
 
-func SuccessResponse(c *gin.Context, statusCode int, data interface{}) {
-	c.JSON(statusCode, gin.H{
-		"status": "success",
-		"data":   data,
+// ErrorResponse sends a standard error response with a given message.
+func ErrorResponse(c *gin.Context, message string) {
+	c.JSON(400, gin.H{
+		"error": message,
 	})
 }
 
-func ErrorResponse(c *gin.Context, statusCode int, message string) {
-	c.JSON(statusCode, gin.H{
-		"status":  "error",
-		"message": message,
+// SuccessResponse sends a standard success response with the provided data.
+func SuccessResponse(c *gin.Context, data interface{}) {
+	c.JSON(200, gin.H{
+		"data": data,
 	})
 }
